@@ -66,9 +66,14 @@ local Section = Tab:Section({
 
 local itemList = {
     "Skyroot Chest",
-    "Stone Chest",
-    "Iron Chest",
-    "Gold Chest"
+    "Griffin Statue",
+    "Bouncy Mushroom",
+    "Beanstalk Painting",
+    "Can Of Beans",
+    "Glowpod",
+    "Flare Melon",
+    "Pet Mutation Shard Giantbean",
+    "Gnome"
 }
 
 local selectedItems = {}
