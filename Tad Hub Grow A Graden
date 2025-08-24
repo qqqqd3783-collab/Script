@@ -1,0 +1,118 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local HRP = LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextChatService = game:GetService("TextChatService")
+
+
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+WindUI:SetNotificationLower(true)
+
+local Window = WindUI:CreateWindow({
+    Title = "Tad Hub | Universe | 0.0.2",
+    Icon = "door-open",
+    Author = "By Tad Hub",
+    Folder = "TadHub",
+    Size = UDim2.fromOffset(550, 350),
+    Transparent = true,
+    Theme = "Dark",
+    Resizable = true,
+    SideBarWidth = 200,
+    Background = "", -- rbxassetid only
+    BackgroundImageTransparency = 0.42,
+    HideSearchBar = true,
+    ScrollBarEnabled = false,
+    User = {
+        Enabled = true,
+        Anonymous = true,
+        Callback = function()
+            print("clicked")
+        end,
+    },
+})
+
+Window:EditOpenButton({
+    Title = "Tad Hub",
+    Icon = "monitor",
+    CornerRadius = UDim.new(0,16),
+    StrokeThickness = 2,
+    Color = ColorSequence.new( -- gradient
+        Color3.fromHex("FF0F7B"), 
+        Color3.fromHex("F89B29")
+    ),
+    OnlyMobile = false,
+    Enabled = true,
+    Draggable = true,
+})
+
+Window:IsResizable(true)
+
+Window:SetToggleKey(Enum.KeyCode.H)
+
+local Tab = Window:Tab({
+    Title = "Main",
+    Icon = "bird",
+    Locked = false,
+})
+local Section = Tab:Section({ 
+    Title = "Status:",
+    TextXAlignment = "Left",
+    TextSize = 17,
+})
+
+local itemList = {
+    "Skyroot Chest",
+    "Stone Chest",
+    "Iron Chest",
+    "Gold Chest"
+}
+
+local selectedItems = {}
+local autoBuyEnabled = false
+local autoBuyThread
+
+local Dropdown = Tab:Dropdown({
+    Title = "เลือกของที่จะซื้อ (Multi)",
+    Values = itemList,
+    Value = { itemList[1] }, -- ค่าเริ่มต้น
+    Multi = true,
+    AllowNone = true,
+    Callback = function(options) 
+        selectedItems = options
+        print("เลือกซื้อ: " .. game:GetService("HttpService"):JSONEncode(options))
+    end
+})
+
+local Toggle = Tab:Toggle({
+    Title = "Auto Buy",
+    Desc = "เปิด/ปิดการซื้ออัตโนมัติ",
+    Icon = "repeat",
+    Default = false,
+    Callback = function(state) 
+        autoBuyEnabled = state
+        print("Auto Buy: " .. tostring(state))
+
+        if state then
+            autoBuyThread = task.spawn(function()
+                while autoBuyEnabled do
+                    task.wait(1) -- ซื้อทุก 1 วิ (ปรับได้)
+                    for _, item in ipairs(selectedItems) do
+                        local args = {
+                            [1] = item
+                        }
+                        game:GetService("ReplicatedStorage").GameEvents.BuyEventShopStock:FireServer(unpack(args))
+                    end
+                end
+            end)
+        else
+            if autoBuyThread then
+                task.cancel(autoBuyThread)
+                autoBuyThread = nil
+            end
+        end
+    end
+})
