@@ -92,15 +92,23 @@ local gearList = {
     "Fishing Rod"
 }
 
+local eggList = {
+    "Common Egg",
+    "Rare Egg",
+    "Epic Egg",
+    "Legendary Egg"
+}
+
 local selectedEvents = {}
 local selectedSeeds = {}
 local selectedGears = {}
+local selectedEggs = {}
 local autoBuyEnabled = false
 local autoBuyThread
 
 local Toggle = Tab:Toggle({
     Title = "Auto Buy",
-    Desc = "เปิด/ปิดการซื้ออัตโนมัติ (Event + Seed + Gear)",
+    Desc = "เปิด/ปิดการซื้ออัตโนมัติ (Event + Seed + Gear + Egg)",
     Icon = "repeat",
     Default = false,
     Callback = function(state)
@@ -112,8 +120,8 @@ local Toggle = Tab:Toggle({
                 while autoBuyEnabled do
                     task.wait(1)
 
-                    for _, event in ipairs(selectedEvents) do
-                        local args = { [1] = event }
+                    for _, ev in ipairs(selectedEvents) do
+                        local args = { [1] = ev }
                         game:GetService("ReplicatedStorage").GameEvents.BuyEventShopStock:FireServer(unpack(args))
                     end
 
@@ -125,6 +133,11 @@ local Toggle = Tab:Toggle({
                     for _, gear in ipairs(selectedGears) do
                         local args = { [1] = gear }
                         game:GetService("ReplicatedStorage").GameEvents.BuyGearStock:FireServer(unpack(args))
+                    end
+
+                    for _, egg in ipairs(selectedEggs) do
+                        local args = { [1] = egg }
+                        game:GetService("ReplicatedStorage").GameEvents.BuyPetEgg:FireServer(unpack(args))
                     end
                 end
             end)
@@ -138,14 +151,14 @@ local Toggle = Tab:Toggle({
 })
 
 local EventDropdown = Tab:Dropdown({
-    Title = "เลือก Event Chest (Multi)",
+    Title = "เลือก Event (Multi)",
     Values = eventList,
     Value = { eventList[1] },
     Multi = true,
     AllowNone = true,
     Callback = function(options)
         selectedEvents = options
-        print("เลือก Event Chest: " .. game:GetService("HttpService"):JSONEncode(options))
+        print("เลือก Event: " .. game:GetService("HttpService"):JSONEncode(options))
     end
 })
 
@@ -170,5 +183,90 @@ local GearDropdown = Tab:Dropdown({
     Callback = function(options)
         selectedGears = options
         print("เลือก Gear: " .. game:GetService("HttpService"):JSONEncode(options))
+    end
+})
+
+local EggDropdown = Tab:Dropdown({
+    Title = "เลือก Egg (Multi)",
+    Values = eggList,
+    Value = { eggList[1] },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(options)
+        selectedEggs = options
+        print("เลือก Egg: " .. game:GetService("HttpService"):JSONEncode(options))
+    end
+})
+
+local Tab2 = Window:Tab({
+    Title = "Auto Check",
+    Icon = "search"
+})
+
+local function getNextCheckTime()
+    local now = os.time()
+    local date = os.date("!*t", now)
+    date.min = 0
+    date.sec = 10
+    date.hour = date.hour + 1
+    return os.time(date)
+end
+
+local Toggle = Tab2:Toggle({
+    Title = "Auto Sell (Real Clock)",
+    Desc = "ตรวจสอบทุกชั่วโมง +10วิ ตามนาฬิกาจริง",
+    Default = false,
+    Callback = function(state)
+        getgenv().AutoSell = state
+        if state then
+            task.spawn(function()
+                local lastKeyword = nil
+                local nextCheck = getNextCheckTime()
+
+                while getgenv().AutoSell do
+                    local now = os.time()
+                    if now >= nextCheck then
+                        local success, traitLabel = pcall(function()
+                            return workspace.BeanstalkEvent:GetChildren()[10].Jack.BeanstalkBubblePart.BeanstalkBillboard.BG.TraitTextLabel
+                        end)
+
+                        if success and traitLabel and traitLabel.Text then
+                            local text = traitLabel.Text
+                            local keyword = string.match(text, ">([%w%s]+)<") or text
+
+                            if lastKeyword and keyword ~= lastKeyword then
+                                local player = game.Players.LocalPlayer
+                                if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                                    local hrp = player.Character.HumanoidRootPart
+                                    local oldCFrame = hrp.CFrame
+
+                                    hrp.CFrame = CFrame.new(86.59, 3.00, 0.43)
+                                    task.wait(0.5)
+
+                                    game:GetService("ReplicatedStorage").GameEvents.Sell_Inventory:FireServer()
+
+                                    task.wait(0.5)
+
+                                    hrp.CFrame = oldCFrame
+
+                                    WindUI:Notify({
+                                        Title = "💰 Auto Sell",
+                                        Content = "ขายของเรียบร้อย (ข้อความเปลี่ยนเป็น: " .. keyword .. ")",
+                                        Icon = "check",
+                                        Duration = 5
+                                    })
+                                end
+                            end
+
+                            lastKeyword = keyword
+                        end
+
+                        nextCheck = getNextCheckTime()
+                    end
+
+                    task.wait(1)
+                end
+            end)
+        end
     end
 })
