@@ -64,7 +64,7 @@ local Section = Tab:Section({
     TextSize = 17,
 })
 
-local itemList = {
+local eventList = {
     "Skyroot Chest",
     "Griffin Statue",
     "Bouncy Mushroom",
@@ -76,28 +76,55 @@ local itemList = {
     "Gnome"
 }
 
-local selectedItems = {}
+local seedList = {
+    "Carrot",
+    "Potato",
+    "Wheat",
+    "Corn",
+    "Tomato"
+}
+
+local gearList = {
+    "Watering Can",
+    "Hoe",
+    "Axe",
+    "Pickaxe",
+    "Fishing Rod"
+}
+
+local selectedEvents = {}
+local selectedSeeds = {}
+local selectedGears = {}
 local autoBuyEnabled = false
 local autoBuyThread
 
 local Toggle = Tab:Toggle({
     Title = "Auto Buy",
-    Desc = "Automatically Buy When your select",
+    Desc = "เปิด/ปิดการซื้ออัตโนมัติ (Event + Seed + Gear)",
     Icon = "repeat",
     Default = false,
-    Callback = function(state) 
+    Callback = function(state)
         autoBuyEnabled = state
         print("Auto Buy: " .. tostring(state))
 
         if state then
             autoBuyThread = task.spawn(function()
                 while autoBuyEnabled do
-                    task.wait(1) -- ซื้อทุก 1 วิ (ปรับได้)
-                    for _, item in ipairs(selectedItems) do
-                        local args = {
-                            [1] = item
-                        }
+                    task.wait(1)
+
+                    for _, event in ipairs(selectedEvents) do
+                        local args = { [1] = event }
                         game:GetService("ReplicatedStorage").GameEvents.BuyEventShopStock:FireServer(unpack(args))
+                    end
+
+                    for _, seed in ipairs(selectedSeeds) do
+                        local args = { [1] = seed }
+                        game:GetService("ReplicatedStorage").GameEvents.BuySeedStock:FireServer(unpack(args))
+                    end
+
+                    for _, gear in ipairs(selectedGears) do
+                        local args = { [1] = gear }
+                        game:GetService("ReplicatedStorage").GameEvents.BuyGearStock:FireServer(unpack(args))
                     end
                 end
             end)
@@ -110,14 +137,38 @@ local Toggle = Tab:Toggle({
     end
 })
 
-local Dropdown = Tab:Dropdown({
-    Title = "Select Beanstalk shop",
-    Values = itemList,
-    Value = { itemList[1] }, -- ค่าเริ่มต้น
+local EventDropdown = Tab:Dropdown({
+    Title = "เลือก Event Chest (Multi)",
+    Values = eventList,
+    Value = { eventList[1] },
     Multi = true,
     AllowNone = true,
-    Callback = function(options) 
-        selectedItems = options
-        print("เลือกซื้อ: " .. game:GetService("HttpService"):JSONEncode(options))
+    Callback = function(options)
+        selectedEvents = options
+        print("เลือก Event Chest: " .. game:GetService("HttpService"):JSONEncode(options))
+    end
+})
+
+local SeedDropdown = Tab:Dropdown({
+    Title = "เลือกเมล็ด (Multi)",
+    Values = seedList,
+    Value = { seedList[1] },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(options)
+        selectedSeeds = options
+        print("เลือกเมล็ด: " .. game:GetService("HttpService"):JSONEncode(options))
+    end
+})
+
+local GearDropdown = Tab:Dropdown({
+    Title = "เลือก Gear (Multi)",
+    Values = gearList,
+    Value = { gearList[1] },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(options)
+        selectedGears = options
+        print("เลือก Gear: " .. game:GetService("HttpService"):JSONEncode(options))
     end
 })
