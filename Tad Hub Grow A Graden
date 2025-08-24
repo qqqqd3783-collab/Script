@@ -94,8 +94,8 @@ local gearList = {
 
 local eggList = {
     "Common Egg",
+    "Uncommon Egg",
     "Rare Egg",
-    "Epic Egg",
     "Legendary Egg"
 }
 
