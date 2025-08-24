@@ -80,21 +80,9 @@ local selectedItems = {}
 local autoBuyEnabled = false
 local autoBuyThread
 
-local Dropdown = Tab:Dropdown({
-    Title = "เลือกของที่จะซื้อ (Multi)",
-    Values = itemList,
-    Value = { itemList[1] }, -- ค่าเริ่มต้น
-    Multi = true,
-    AllowNone = true,
-    Callback = function(options) 
-        selectedItems = options
-        print("เลือกซื้อ: " .. game:GetService("HttpService"):JSONEncode(options))
-    end
-})
-
 local Toggle = Tab:Toggle({
     Title = "Auto Buy",
-    Desc = "เปิด/ปิดการซื้ออัตโนมัติ",
+    Desc = "Automatically Buy When your select",
     Icon = "repeat",
     Default = false,
     Callback = function(state) 
@@ -119,5 +107,17 @@ local Toggle = Tab:Toggle({
                 autoBuyThread = nil
             end
         end
+    end
+})
+
+local Dropdown = Tab:Dropdown({
+    Title = "Select Beanstalk shop",
+    Values = itemList,
+    Value = { itemList[1] }, -- ค่าเริ่มต้น
+    Multi = true,
+    AllowNone = true,
+    Callback = function(options) 
+        selectedItems = options
+        print("เลือกซื้อ: " .. game:GetService("HttpService"):JSONEncode(options))
     end
 })
